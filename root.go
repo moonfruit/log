@@ -4,6 +4,7 @@ import (
 	"os"
 )
 
+// Predefined handlers
 var (
 	root          = &logger{[]interface{}{}, new(swapHandler)}
 	StdoutHandler = StreamHandler(os.Stdout, LogfmtFormat())

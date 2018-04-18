@@ -1,7 +1,8 @@
-package log15
+package log
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/go-stack/stack"
@@ -20,11 +21,34 @@ const (
 	LvlWarn
 	LvlInfo
 	LvlDebug
+	LvlTrace
 )
 
-// Returns the name of a Lvl
+// Aligned returns a 5-character string containing the name of a Lvl.
+func (l Lvl) AlignedString() string {
+	switch l {
+	case LvlTrace:
+		return "TRACE"
+	case LvlDebug:
+		return "DEBUG"
+	case LvlInfo:
+		return "INFO "
+	case LvlWarn:
+		return "WARN "
+	case LvlError:
+		return "ERROR"
+	case LvlCrit:
+		return "CRIT "
+	default:
+		panic("bad level")
+	}
+}
+
+// Strings returns the name of a Lvl.
 func (l Lvl) String() string {
 	switch l {
+	case LvlTrace:
+		return "trce"
 	case LvlDebug:
 		return "dbug"
 	case LvlInfo:
@@ -44,6 +68,8 @@ func (l Lvl) String() string {
 // Useful for parsing command line args and configuration files.
 func LvlFromString(lvlString string) (Lvl, error) {
 	switch lvlString {
+	case "trace", "trce":
+		return LvlTrace, nil
 	case "debug", "dbug":
 		return LvlDebug, nil
 	case "info":
@@ -87,6 +113,7 @@ type Logger interface {
 	SetHandler(h Handler)
 
 	// Log a message at the given level with context key/value pairs
+	Trace(msg string, ctx ...interface{})
 	Debug(msg string, ctx ...interface{})
 	Info(msg string, ctx ...interface{})
 	Warn(msg string, ctx ...interface{})
@@ -128,6 +155,10 @@ func newContext(prefix []interface{}, suffix []interface{}) []interface{} {
 	return newCtx
 }
 
+func (l *logger) Trace(msg string, ctx ...interface{}) {
+	l.write(msg, LvlTrace, ctx)
+}
+
 func (l *logger) Debug(msg string, ctx ...interface{}) {
 	l.write(msg, LvlDebug, ctx)
 }
@@ -146,6 +177,7 @@ func (l *logger) Error(msg string, ctx ...interface{}) {
 
 func (l *logger) Crit(msg string, ctx ...interface{}) {
 	l.write(msg, LvlCrit, ctx)
+	os.Exit(1)
 }
 
 func (l *logger) GetHandler() Handler {
